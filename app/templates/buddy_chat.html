@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Buddy's Corner - Dear Diary{% endblock %}
+
+{% block navigation %}
+<div class="space-y-1">
+  <a href="{{ url_for('diary.all_entries') }}" 
+     class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100">
+    <i class="far fa-calendar text-gray-600"></i>
+    <span class="text-gray-700">All Entries</span>
+  </a>
+  <a href="{{ url_for('diary.bookmarked_entries') }}" 
+     class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100">
+    <i class="far fa-bookmark text-gray-600"></i>
+    <span class="text-gray-700">Bookmarked Entries</span>
+  </a>
+  <a href="{{ url_for('diary.deleted_entries') }}" 
+     class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100">
+    <i class="far fa-trash-alt text-gray-600"></i>
+    <span class="text-gray-700">Deleted Entries</span>
+  </a>
+</div>
+
+<div class="mt-8 px-2">
+  <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Recent</h3>
+  <div class="space-y-2">
+    {% for entry in recent_entries %}
+    <a href="{{ url_for('diary.view_entry', entry_id=entry.id) }}" 
+       class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100">
+      {% if entry.emoji %}
+      <span class="text-xl">{{ entry.emoji }}</span>
+      {% else %}
+      <i class="fas fa-feather text-brand-pink-500"></i>
+      {% endif %}
+      <div>
+        <div class="font-medium text-gray-800">{{ entry.title }}</div>
+        <div class="text-sm text-gray-500">{{ entry.created_at.strftime('%H:%M') }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="h-full flex flex-col">
+  <!-- Header -->
+  <div class="flex items-center justify-between p-6 border-b border-gray-100">
+    <div class="flex items-center space-x-3">
+      
+        <!-- <i class="fas fa-robot text-white text-xl"></i> -->
+        <img src="{{ url_for('static', filename='images/dd_simple.png') }}" alt="DD Simple" class="h-8 w-8 text-gray-600"/>
+      
+      <h1 class="text-xl font-bold text-gray-900">Buddy's Corner <i class="fas fa-sparkles text-brand-yellow-300 ml-1"></i></h1>
+    </div>
+  </div>
+
+  <!-- Chat Messages -->
+  <div class="flex-grow p-6 overflow-y-auto space-y-6" id="chat-messages">
+    <!-- Initial welcome message -->
+    <div class="flex items-start space-x-3 max-w-2xl">
+      <div class="flex-shrink-0">
+        <div class="w-8 h-8 bg-brand-pink-500 rounded-lg flex items-center justify-center">
+          <i class="fas fa-robot text-white text-sm"></i>
+        </div>
+      </div>
+      <div class="flex-grow">
+        <div class="bg-brand-pink-50 text-gray-800 p-4 rounded-2xl rounded-tl-none">
+          <p>Hello! I'm Buddy, your AI assistant. I can help you reflect on your diary entries or answer questions about them. How can I assist you today?</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message Input -->
+  <div class="p-6 border-t border-gray-100">
+    <div class="flex items-center space-x-4">
+      <div class="flex-grow relative">
+        <input type="text" 
+               id="message-input"
+               placeholder="Enter Message..." 
+               class="w-full pl-4 pr-12 py-3 bg-brand-pink-50 border-none rounded-xl text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-brand-pink-200">
+        <button id="send-button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-brand-pink-500 hover:text-brand-pink-600">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const chatMessages = document.getElementById('chat-messages');
+  const messageInput = document.getElementById('message-input');
+  const sendButton = document.getElementById('send-button');
+  
+  // Load chat history if available
+  loadChatHistory();
+
+  function scrollToBottom() {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function addMessage(content, isUser = false, isLoading = false) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `flex items-start ${isUser ? 'justify-end space-x-3 max-w-2xl ml-auto' : 'space-x-3 max-w-2xl'}`;
+    
+    let iconHtml = '';
+    if (!isUser) {
+      iconHtml = `
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-brand-pink-500 rounded-lg flex items-center justify-center">
+            <i class="fas fa-robot text-white text-sm"></i>
+          </div>
+        </div>
+      `;
+    }
+    
+    let contentHtml = '';
+    if (isLoading) {
+      contentHtml = `
+        <div class="flex-grow">
+          <div class="${isUser ? 'bg-brand-yellow-100' : 'bg-brand-pink-50'} text-gray-800 p-4 rounded-2xl ${isUser ? 'rounded-tr-none' : 'rounded-tl-none'}">
+            <div class="flex items-center">
+              <div class="dot-typing"></div>
+              <p class="ml-2">Thinking...</p>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      contentHtml = `
+        <div class="flex-grow">
+          <div class="${isUser ? 'bg-brand-yellow-100' : 'bg-brand-pink-50'} text-gray-800 p-4 rounded-2xl ${isUser ? 'rounded-tr-none' : 'rounded-tl-none'}">
+            <p>${content}</p>
+          </div>
+        </div>
+      `;
+    }
+    
+    let userIconHtml = '';
+    if (isUser) {
+      userIconHtml = `
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-brand-yellow-300 rounded-lg flex items-center justify-center">
+            <i class="fas fa-user text-white text-sm"></i>
+          </div>
+        </div>
+      `;
+    }
+    
+    messageDiv.innerHTML = `${iconHtml}${contentHtml}${userIconHtml}`;
+    chatMessages.appendChild(messageDiv);
+    scrollToBottom();
+    
+    return messageDiv;
+  }
+
+  async function loadChatHistory() {
+    try {
+      const response = await fetch('/diary/chat_history');
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Clear default welcome message if we have history
+        if (data.history && data.history.length > 0) {
+          chatMessages.innerHTML = '';
+          
+          data.history.forEach(msg => {
+            addMessage(msg.message, msg.type === 'user');
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+    }
+  }
+
+  async function sendMessage() {
+    const content = messageInput.value.trim();
+    if (!content) return;
+
+    // Disable input and button while processing
+    messageInput.disabled = true;
+    sendButton.disabled = true;
+    
+    // Add user message
+    addMessage(content, true);
+    messageInput.value = '';
+    
+    // Add loading indicator for AI response
+    const loadingMessage = addMessage('', false, true);
+    
+    try {
+      // Send message to server
+      const response = await fetch('/diary/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: content }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Remove loading indicator
+        chatMessages.removeChild(loadingMessage);
+        
+        // Add AI response
+        addMessage(data.response, false);
+      } else {
+        // Remove loading indicator
+        chatMessages.removeChild(loadingMessage);
+        
+        // Show error message
+        addMessage("Sorry, I'm having trouble connecting to my memory. Please try again later.", false);
+        console.error('Error from server:', response.status);
+      }
+    } catch (error) {
+      // Remove loading indicator
+      chatMessages.removeChild(loadingMessage);
+      
+      // Show error message
+      addMessage("I couldn't process your message due to a network error. Please check your connection and try again.", false);
+      console.error('Error sending message:', error);
+    } finally {
+      // Re-enable input and button
+      messageInput.disabled = false;
+      sendButton.disabled = false;
+      messageInput.focus();
+    }
+  }
+
+  // Send message on button click
+  sendButton.addEventListener('click', sendMessage);
+
+  // Send message on Enter key
+  messageInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // Add styles for loading animation
+  const style = document.createElement('style');
+  style.textContent = `
+    .dot-typing {
+      position: relative;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: #db2777;
+      animation: dot-typing 1.5s infinite linear;
+    }
+    
+    .dot-typing::before,
+    .dot-typing::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: #db2777;
+      animation: dot-typing 1.5s infinite linear;
+    }
+    
+    .dot-typing::before {
+      left: -8px;
+      animation-delay: 0s;
+    }
+    
+    .dot-typing::after {
+      left: 8px;
+      animation-delay: 0.75s;
+    }
+    
+    @keyframes dot-typing {
+      0%, 20% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+      40% {
+        transform: scale(1.4);
+        opacity: 1;
+      }
+      60%, 100% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Initial scroll to bottom
+  scrollToBottom();
+});
+</script>
+{% endblock %}

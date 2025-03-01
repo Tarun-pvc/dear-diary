@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}{{ entry.title }} - Dear Diary{% endblock %}
+
+{% block navigation %}
+<div class="space-y-1">
+  <a href="{{ url_for('diary.dashboard') }}" 
+     class="flex items-center space-x-3 p-2 rounded-lg {% if request.endpoint == 'diary.dashboard' %}bg-brand-pink-50 text-brand-pink-600{% else %}hover:bg-gray-100{% endif %}">
+    <i class="fas fa-house {% if request.endpoint == 'diary.dashboard' %}text-brand-pink-600{% else %}text-gray-600{% endif %}"></i>
+    <span class="{% if request.endpoint == 'diary.dashboard' %}text-brand-pink-600{% else %}text-gray-700{% endif %}">Dashboard</span>
+  </a>
+  <a href="{{ url_for('diary.all_entries') }}" 
+     class="flex items-center space-x-3 p-2 rounded-lg {% if request.endpoint == 'diary.all_entries' %}bg-brand-pink-50 text-brand-pink-600{% else %}hover:bg-gray-100{% endif %}">
+    <i class="far fa-list-alt {% if request.endpoint == 'diary.all_entries' %}text-brand-pink-600{% else %}text-gray-600{% endif %}"></i>
+    <span class="{% if request.endpoint == 'diary.all_entries' %}text-brand-pink-600{% else %}text-gray-700{% endif %}">All Entries</span>
+  </a>
+  <a href="{{ url_for('diary.bookmarked_entries') }}" 
+     class="flex items-center space-x-3 p-2 rounded-lg {% if request.endpoint == 'diary.bookmarked_entries' %}bg-brand-pink-50 text-brand-pink-600{% else %}hover:bg-gray-100{% endif %}">
+    <i class="far fa-bookmark {% if request.endpoint == 'diary.bookmarked_entries' %}text-brand-pink-600{% else %}text-gray-600{% endif %}"></i>
+    <span class="{% if request.endpoint == 'diary.bookmarked_entries' %}text-brand-pink-600{% else %}text-gray-700{% endif %}">Bookmarked</span>
+  </a>
+  <a href="{{ url_for('diary.deleted_entries') }}" 
+     class="flex items-center space-x-3 p-2 rounded-lg {% if request.endpoint == 'diary.deleted_entries' %}bg-brand-pink-50 text-brand-pink-600{% else %}hover:bg-gray-100{% endif %}">
+    <i class="far fa-trash-alt {% if request.endpoint == 'diary.deleted_entries' %}text-brand-pink-600{% else %}text-gray-600{% endif %}"></i>
+    <span class="{% if request.endpoint == 'diary.deleted_entries' %}text-brand-pink-600{% else %}text-gray-700{% endif %}">Deleted</span>
+  </a>
+</div>
+
+<div class="mt-8 px-2">
+  <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Recent</h3>
+  <div class="space-y-2">
+    {% for entry in recent_entries %}
+    <a href="{{ url_for('diary.view_entry', entry_id=entry.id) }}" 
+       class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 {% if current_entry and entry.id == current_entry.id %}bg-gray-100{% endif %}">
+      {% if entry.emoji %}
+      <span class="text-xl">{{ entry.emoji }}</span>
+      {% else %}
+      <i class="fas fa-feather text-brand-pink-500"></i>
+      {% endif %}
+      <div>
+        <div class="font-medium text-gray-800">{{ entry.title }}</div>
+        <div class="text-sm text-gray-500">{{ entry.created_at.strftime('%H:%M') }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="p-8 max-w-4xl mx-auto">
+  <!-- Back Button -->
+  <a href="{{ url_for('diary.all_entries') }}" class="inline-flex items-center space-x-2 text-brand-pink-600 mb-6">
+    <i class="fas fa-chevron-left"></i>
+    <span>Back</span>
+  </a>
+
+  <!-- Entry Header -->
+  <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center space-x-3">
+      <span class="text-2xl">{{ entry.emoji }}</span>
+      <h1 class="text-2xl font-bold text-gray-900">{{ entry.title }}</h1>
+      <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+        <i class="fas fa-pencil text-gray-400"></i>
+      </button>
+    </div>
+    <div class="flex items-center space-x-4">
+      <button id="bookmark-btn" class="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200" title="Bookmark this entry">
+        <i class="{% if entry.is_bookmarked %}fas{% else %}far{% endif %} fa-bookmark text-gray-500"></i>
+      </button>
+      <button id="delete-btn" class="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200" title="Delete this entry">
+        <i class="far fa-trash-alt text-gray-500"></i>
+      </button>
+      <div class="text-sm text-gray-500">
+        <i class="far fa-clock"></i>
+        {{ entry.created_at.strftime('%H:%M') }}
+      </div>
+      <div class="text-sm text-gray-500">
+        {{ entry.created_at.strftime('%d %b %Y') }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Entry Metadata -->
+  <div class="bg-white rounded-2xl border border-gray-100 p-6 mb-8">
+    <div class="grid grid-cols-3 gap-6">
+      <div>
+        <div class="text-sm text-gray-500 mb-1">Mood</div>
+        <div class="text-lg">{{ entry.get('mood_emoji', '😊') }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500 mb-1">Woken up at</div>
+        <div class="font-medium">{{ entry.get('wakeup_time', 'Not set') }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500 mb-1">Slept at</div>
+        <div class="font-medium">{{ entry.get('sleep_time', 'Not set') }}</div>
+      </div>
+    </div>
+    <div class="text-sm text-gray-500 mt-4">
+      Last Edited: {% if entry.updated_at %}{{ entry.updated_at.strftime('%d %B %Y %H:%M') }}{% else %}{{ entry.created_at.strftime('%d %B %Y %H:%M') }}{% endif %}
+    </div>
+  </div>
+
+  <!-- Entry Content -->
+  <div class="space-y-8">
+    <section>
+      <h2 class="text-xl font-bold text-gray-900 mb-4">Today's Happenings</h2>
+      <div class="prose prose-gray max-w-none">
+        {{ entry.get('content', '') | safe }}
+      </div>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-bold text-gray-900 mb-4">Learnings and goals:</h2>
+      <div class="prose prose-gray max-w-none">
+        {{ entry.get('learnings', '') | safe }}
+      </div>
+    </section>
+  </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle bookmark button
+    document.getElementById('bookmark-btn').addEventListener('click', async function() {
+      try {
+        const response = await fetch('/diary/toggle_bookmark/{{ entry.id }}', {
+          method: 'POST'
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          const bookmarkIcon = this.querySelector('i');
+          
+          if (result.is_bookmarked) {
+            bookmarkIcon.classList.remove('far');
+            bookmarkIcon.classList.add('fas');
+          } else {
+            bookmarkIcon.classList.remove('fas');
+            bookmarkIcon.classList.add('far');
+          }
+        }
+      } catch (error) {
+        console.error('Error toggling bookmark:', error);
+      }
+    });
+
+    // Handle delete button
+    document.getElementById('delete-btn').addEventListener('click', async function() {
+      if (confirm('Are you sure you want to delete this entry?')) {
+        try {
+          const response = await fetch('/diary/delete_entry/{{ entry.id }}', {
+            method: 'POST'
+          });
+          
+          if (response.ok) {
+            window.location.href = "{{ url_for('diary.all_entries') }}";
+          }
+        } catch (error) {
+          console.error('Error deleting entry:', error);
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}
+{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tailwindcss/typography@0.5.9/dist/typography.min.css">
+{% endblock %}

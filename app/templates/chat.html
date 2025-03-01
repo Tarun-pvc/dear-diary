@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block title %}AI Chat{% endblock %}
+{% block content %}
+<div class="h-full flex flex-col">
+  <!-- Header -->
+  <div class="flex items-center justify-between p-6 border-b border-gray-100">
+    <div class="flex items-center space-x-3">
+      <div class="w-12 h-12 bg-brand-purple-500 rounded-xl flex items-center justify-center">
+        <i class="fas fa-comment-dots text-white text-xl"></i>
+      </div>
+      <h1 class="text-xl font-bold text-gray-900">AI Chat <i class="fas fa-sparkles text-brand-yellow-300 ml-1"></i></h1>
+    </div>
+  </div>
+
+  <!-- Chat Messages -->
+  <div class="flex-grow p-6 overflow-y-auto space-y-6" id="chat-box">
+    <!-- Messages will be added here dynamically -->
+  </div>
+
+  <!-- Message Input -->
+  <div class="p-6 border-t border-gray-100">
+    <div class="flex items-center space-x-4">
+      <div class="flex-grow relative">
+        <form id="chat-form">
+          <input type="text" 
+                 id="message" 
+                 placeholder="Type your message..." 
+                 class="w-full pl-4 pr-12 py-3 bg-brand-purple-50 border-none rounded-xl text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-brand-purple-200"
+                 required>
+          <button type="submit" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-brand-purple-500 hover:text-brand-purple-600">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chat Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const chatBox = document.getElementById('chat-box');
+  const chatForm = document.getElementById('chat-form');
+  const messageInput = document.getElementById('message');
+  
+  // Load chat history
+  loadChatHistory();
+  
+  function scrollToBottom() {
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+  
+  function addMessage(content, isUser = false, isLoading = false) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `flex items-start ${isUser ? 'justify-end space-x-3 max-w-2xl ml-auto' : 'space-x-3 max-w-2xl'}`;
+    
+    let iconHtml = '';
+    if (!isUser) {
+      iconHtml = `
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-brand-purple-500 rounded-lg flex items-center justify-center">
+            <i class="fas fa-robot text-white text-sm"></i>
+          </div>
+        </div>
+      `;
+    }
+    
+    let contentHtml = '';
+    if (isLoading) {
+      contentHtml = `
+        <div class="flex-grow">
+          <div class="${isUser ? 'bg-brand-yellow-100' : 'bg-brand-purple-50'} text-gray-800 p-4 rounded-2xl ${isUser ? 'rounded-tr-none' : 'rounded-tl-none'}">
+            <div class="flex items-center">
+              <div class="dot-typing"></div>
+              <p class="ml-2">Thinking...</p>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      contentHtml = `
+        <div class="flex-grow">
+          <div class="${isUser ? 'bg-brand-yellow-100' : 'bg-brand-purple-50'} text-gray-800 p-4 rounded-2xl ${isUser ? 'rounded-tr-none' : 'rounded-tl-none'}">
+            <p>${content}</p>
+          </div>
+        </div>
+      `;
+    }
+    
+    let userIconHtml = '';
+    if (isUser) {
+      userIconHtml = `
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-brand-yellow-300 rounded-lg flex items-center justify-center">
+            <i class="fas fa-user text-white text-sm"></i>
+          </div>
+        </div>
+      `;
+    }
+    
+    messageDiv.innerHTML = `${iconHtml}${contentHtml}${userIconHtml}`;
+    chatBox.appendChild(messageDiv);
+    scrollToBottom();
+    
+    return messageDiv;
+  }
+  
+  async function loadChatHistory() {
+    try {
+      const response = await fetch('{{ url_for("chat.chat_history") }}');
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.history && data.history.length > 0) {
+          chatBox.innerHTML = ''; // Clear welcome message
+          
+          data.history.forEach(msg => {
+            addMessage(msg.message, msg.type === 'user');
+          });
+        } else {
+          // Add welcome message if no history
+          addMessage("Hello! I'm your AI assistant. How can I help you today?", false);
+        }
+        
+        scrollToBottom();
+      }
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+      // Add default welcome message if loading fails
+      addMessage("Hello! I'm your AI assistant. How can I help you today?", false);
+    }
+  }
+  
+  chatForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const message = messageInput.value.trim();
+    if (!message) return;
+    
+    // Disable input during processing
+    messageInput.disabled = true;
+    
+    // Add user message to chat
+    addMessage(message, true);
+    messageInput.value = '';
+    
+    // Add loading message
+    const loadingMessage = addMessage('', false, true);
+    
+    try {
+      // Send message to server
+      const response = await fetch('{{ url_for("chat.chat_send") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'message=' + encodeURIComponent(message)
+      });
+      
+      const data = await response.json();
+      
+      // Remove loading message
+      chatBox.removeChild(loadingMessage);
+      
+      if (response.ok) {
+        // Add AI response
+        addMessage(data.response, false);
+      } else {
+        // Show error message
+        addMessage("I'm sorry, I couldn't process your request. " + (data.error || "Please try again."), false);
+      }
+    } catch (error) {
+      // Remove loading message
+      chatBox.removeChild(loadingMessage);
+      
+      // Show error message
+      addMessage("I'm sorry, there was an error processing your request. Please try again later.", false);
+      console.error("Error:", error);
+    } finally {
+      // Re-enable input
+      messageInput.disabled = false;
+      messageInput.focus();
+    }
+  });
+  
+  // Add styles for the typing animation
+  const style = document.createElement('style');
+  style.textContent = `
+    .dot-typing {
+      position: relative;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: #8b5cf6;
+      animation: dot-typing 1.5s infinite linear;
+    }
+    
+    .dot-typing::before,
+    .dot-typing::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: #8b5cf6;
+      animation: dot-typing 1.5s infinite linear;
+    }
+    
+    .dot-typing::before {
+      left: -8px;
+      animation-delay: 0s;
+    }
+    
+    .dot-typing::after {
+      left: 8px;
+      animation-delay: 0.75s;
+    }
+    
+    @keyframes dot-typing {
+      0%, 20% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+      40% {
+        transform: scale(1.4);
+        opacity: 1;
+      }
+      60%, 100% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+});
+</script>
+{% endblock %}

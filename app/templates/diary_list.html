@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}My Diaries{% endblock %}
+{% block content %}
+<h2>My Diaries</h2>
+<a href="{{ url_for('diary.diary_create') }}">Create New Diary</a>
+<ul>
+  {% for diary in diaries %}
+  <li>
+    <a href="{{ url_for('diary.diary_edit', id=diary._id) }}">{{ diary.title }}</a>
+    <a href="{{ url_for('diary.diary_delete', id=diary._id) }}">Delete</a>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}
