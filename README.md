@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="dd_text.jpg" alt="Dear Diary Text Logo" width="400"/>
+  <img src="./static/images/dd_text.jpg" alt="Dear Diary Text Logo" width="400"/>
   <br>
-  <img src="dd_simple.png" alt="Dear Diary Simple Logo" width="150"/>
+  <!-- <img src="./static/images/dd_simple.png" alt="Dear Diary Simple Logo" width="150"/> -->
 </div>
 
 # Dear Diary
