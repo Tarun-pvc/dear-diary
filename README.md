@@ -4,20 +4,18 @@
   <!-- <img src="./static/images/dd_simple.png" alt="Dear Diary Simple Logo" width="150"/> -->
 </div>
 
-# Dear Diary
+# <img src="./static/images/dd_simple.png" alt="Dear Diary Logo" width="40" style="vertical-align:middle;margin-right:8px;"> Dear Diary
 
-Dear Diary is a personal journaling application that helps you keep track of your thoughts, memories, and daily experiences in a secure and organized manner.
+Dear Diary is a **personal journaling application** that helps you keep track of your thoughts, memories, and daily experiences in a secure and organized manner; **Buddy the friendly AI** will give you company!
 
-## Features
+## Features :writing_hand:
 
-- **Secure Journaling**: Keep your personal thoughts protected with authentication
+- **Secure Journaling**: Securely store your entries locally. 
 - **Rich Text Editing**: Format your entries with various styling options
 - **Date Organization**: Entries automatically organized by date
-- **Search Capability**: Quickly find past entries
-- **Customizable Themes**: Personalize your journaling experience
-- **Cross-Platform**: Available on desktop and mobile devices
+- **Ease of reflection**: Quickly find and talk about past entries through Buddy!
 
-## Installation
+## Installation :gear:
 
 ### Prerequisites
 
@@ -28,8 +26,8 @@ Dear Diary is a personal journaling application that helps you keep track of you
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/dear_diary.git
-   cd dear_diary
+   git clone https://github.com/Tarun-pvc/dear-diary.git
+   cd dear-diary
    ```
 
 2. Create a virtual environment:
@@ -52,11 +50,11 @@ Dear Diary is a personal journaling application that helps you keep track of you
    pip install -r requirements.txt
    ```
 
-## Usage
+## Usage :sunglasses:
 
 1. Start the application:
    ```
-   python main.py
+   python run.py
    ```
 
 2. Register a new account or log in with existing credentials
@@ -65,9 +63,9 @@ Dear Diary is a personal journaling application that helps you keep track of you
 
 4. Use the calendar view to navigate through your past entries
 
-5. Use the search functionality to find specific content
+5. Use Buddy (AI Assistant) to find specific content
 
-## Configuration
+## Configuration :thinking:
 
 The application can be configured through the `config.json` file located in the application directory:
 
@@ -75,11 +73,11 @@ The application can be configured through the `config.json` file located in the 
 - `font_size`: Adjust text display size
 - `backup_location`: Set where your journal backups are stored
 
-## Data Privacy
+## Data Privacy :monocle_face:	
 
-Your journal entries are stored locally on your device by default. If you enable cloud sync, data will be encrypted before being transferred to ensure your privacy.
+Your journal entries are stored locally on your device by default.
 
-## Troubleshooting
+## Troubleshooting :grimacing:
 
 If you encounter any issues:
 
@@ -88,11 +86,11 @@ If you encounter any issues:
 3. Try reinstalling the application
 4. Contact support at support@deardiaryapp.com
 
-## License
+## License :hugs:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgments
+## Acknowledgments :handshake:
 
 - Thanks to all contributors who have helped make Dear Diary better
 - Special thanks to our beta testers for their valuable feedback
