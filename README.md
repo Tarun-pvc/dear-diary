@@ -84,7 +84,7 @@ If you encounter any issues:
 1. Check the logs in the `logs` directory
 2. Ensure you have the latest version
 3. Try reinstalling the application
-4. Contact support at support@deardiaryapp.com
+4. Start an *issue* on github. 
 
 ## License :hugs:
 
